@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>re:deck COMMAND</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;font-family:'Orbitron',sans-serif}
+    html,body{height:100%;background:#0a1a0a;color:#cce8cc}
+    #app{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      height:100vh;
+    }
+    .screen{display:none;flex-direction:column;align-items:center;gap:20px}
+    .active{display:flex}
+    button{
+      background:#1a3d1a;
+      color:#cce8cc;
+      border:2px solid #4caf50;
+      padding:14px 24px;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:18px;
+      text-transform:uppercase;
+      transition:all 0.2s ease-in-out;
+      box-shadow:0 0 10px rgba(0,255,0,0.2);
+    }
+    button:hover{background:#2e5e2e;box-shadow:0 0 16px rgba(0,255,0,0.4)}
+h1 {
+  font-size: 50px;   
+  color: #7fff7f;    
+  text-shadow: 0 0 12px rgba(0,255,0,0.5);
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  margin-top: 0;
+}
+#logoImg {
+  width: 220px;  
+  height: 220px;
+  margin-bottom: 26px;
+  margin-top: 16px;
+}
+#fireCanvas {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 35vh;
+  pointer-events: none;
+  z-index: 20;
+  display: block;
+  background: transparent;
+}
+@media (max-width: 600px) {
+  h1{font-size:40px;}
+  #logoImg{width:70px;height:70px;}
+  #fireCanvas{height:25vh;}
+}
+    h2{font-size:24px;margin-bottom:12px;color:#aaffaa;text-shadow:0 0 8px rgba(0,255,0,0.3)}
+
+    #gameScreen{
+      flex-direction:row !important;
+      align-items:flex-start;
+      gap:40px;
+      width:100%;
+      justify-content:flex-start;
+      position:relative;
+    }
+    #canvasContainer{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      position:relative;
+    }
+    #gameCanvas{
+      background:#0d1f0d;
+      border:2px solid #4caf50;
+      border-radius:8px;
+      display:block;
+      box-shadow:0 0 20px rgba(0,255,0,0.15);
+      margin-right:0;
+      cursor:crosshair;
+    }
+    #sidePanel{
+      min-width:250px;
+      padding:20px 0;
+      display:flex;
+      flex-direction:column;
+      gap:24px;
+      align-items:flex-start;
+    }
+    .towerBtn{
+      background:#294d29;
+      border:1px solid #4caf50;
+      border-radius:5px;
+      padding:10px 16px;
+      color:#cce8cc;
+      margin-bottom:8px;
+      font-size:16px;
+      box-shadow:0 0 6px rgba(0,255,0,0.1);
+      cursor:pointer;
+      text-align:left;
+      width:180px;
+      transition:background 0.2s;
+    }
+    .towerBtn:hover{background:#3e7e3e;}
+    .buildInstruction{
+      color:#ff0;
+      font-weight:bold;
+      margin-bottom:10px;
+      font-size:17px;
+      text-shadow:0 0 9px #444;
+    }
+
+    /* Controls bottom right */
+    #gameControls{
+      position:absolute;
+      right:32px;
+      bottom:32px;
+      display:flex;
+      flex-direction:row;
+      gap:20px;
+      align-items:center;
+      z-index:10;
+    }
+    #speedToggleBtn{
+      padding:10px 18px;
+      font-size:17px;
+      border-radius:6px;
+      border:2px solid #4caf50;
+      background:#153315;
+      color:#b2ffb2;
+      cursor:pointer;
+      margin-right:0;
+      transition:all 0.2s;
+      min-width:60px;
+      font-weight:bold;
+    }
+    #speedToggleBtn.active{
+      background:#4caf50;
+      color:#153315;
+      border:2px solid #7fff7f;
+      box-shadow:0 0 8px #7fff7f80;
+    }
+    #nextWaveBtn{
+      padding:12px 28px;
+      font-size:18px;
+      border-radius:8px;
+      border:2px solid #ffd700;
+      background:#353315;
+      color:#ffe066;
+      font-weight:bold;
+      cursor:pointer;
+      margin-left:15px;
+      transition:all 0.2s;
+      box-shadow:0 0 10px #ffd70060;
+    }
+    #nextWaveBtn:active{
+      background:#ffe066;
+      color:#353315;
+      border:2px solid #ffe066;
+      box-shadow:0 0 16px #ffd70080;
+    }
+    #moneyWaveOverlay{
+      position:absolute;
+      top:16px;
+      right:24px;
+      background:rgba(16,32,16,0.93);
+      border-radius:12px;
+      padding:14px 28px 10px 28px;
+      box-shadow:0 0 12px #1a3d1a80;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      z-index:20;
+      min-width:160px;
+      pointer-events:none;  
+    }
+    #moneyDisplay{
+      font-size:22px;
+      font-weight:bold;
+      color:#aaffaa;
+      letter-spacing:1px;
+      text-align:right;
+    }
+    #waveDisplay{
+      font-size:18px;
+      font-weight:bold;
+      color:#ffe066;
+      text-align:right;
+      margin-bottom:4px;
+    }
+    .towerBtn.buildBtn {
+  transition: border 0.15s, box-shadow 0.18s, background 0.15s;
+    }
+    .towerBtn.buildBtn:hover {
+      border: 2.8px solid #83ffa8;
+      box-shadow: 0 0 12px #83ffa844;
+      background: #1b3d1b;
+      color:#fff;
+      z-index:2;
+    }
+#sideContent {
+  width: 400px !important;
+  max-width: 430px;
+  min-width: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+  position: relative;
+  padding-bottom: 0;
+}
+      
+#sideContent::-webkit-scrollbar { width: 10px; background: #222; }
+#sideContent::-webkit-scrollbar-thumb { background: #406f40; border-radius: 6px; }
+#integrityDisplay {
+  font-size:18px;
+  font-weight:bold;
+  color:#ff5f5f;
+  text-align:right;
+  margin-top:4px;
+}
+
+      #sideHeader {
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 12px;
+}
+#sideTitle { margin:0; font-size:20px; color:#aaffaa; flex:1; }
+
+
+.supportCards {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+  padding:8px 12px;
+}
+.supportCard {
+  background: linear-gradient(180deg, rgba(28,45,28,0.95), rgba(22,36,22,0.9));
+  border: 2px solid rgba(255,165,0,0.12);
+  border-radius:10px;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+}
+.supportCard .meta { display:flex; flex-direction:column; gap:6px; }
+.supportCard .sTitle { font-weight:800; color:#ffd76b; font-size:15px; }
+.supportCard .sDesc { font-size:13px; color:#d6f2c8; opacity:0.95; }
+.supportCard .sCost { font-weight:900; color:#ffd700; font-size:16px; }
+.supportCard button.requestBtn {
+  padding:8px 12px;
+  font-size:13px;
+  border-radius:8px;
+  background:#2b4a2b;
+  border:1px solid #6fe38f;
+  color:#dfffe0;
+  cursor:pointer;
+}
+
+.deckCard {
+  width: 120px;
+  height: 140px;            
+  background: linear-gradient(180deg, rgba(18,36,18,0.96), rgba(8,18,8,0.92));
+  border: 2px solid rgba(110,200,120,0.12);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.42);
+  color: #dfffe0;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  cursor:grab;
+  user-select:none;
+}
+.deckCard:active { cursor:grabbing; }
+.deckCard .title { font-weight:900; color:#ffd76b; font-size:15px; }
+.deckCard.small { width: 96px; height:120px; font-size:13px; }
+
+.deckSlot {
+  width: 100px;
+  height: 132px;
+  background: rgba(20,30,20,0.6);
+  border: 2px dashed rgba(120,120,120,0.12);
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#aaffaa;
+  font-weight:700;
+  cursor:pointer;
+}
+.deckSlot.empty { color:#778877; font-weight:600; }
+      #autoWaveBtn{
+      padding:10px 14px;
+      font-size:14px;
+      border-radius:6px;
+      border:2px solid #4caf50;
+      background:#153315;
+      color:#b2ffb2;
+      cursor:pointer;
+      transition:all 0.15s;
+      min-width:88px;
+      font-weight:bold;
+    }
+    #autoWaveBtn.active{
+      background:#4caf50;
+      color:#153315;
+      border:2px solid #7fff7f;
+      box-shadow:0 0 8px #7fff7f80;
+    }
+  </style>
+</head>
+<body>
+<canvas id="fireCanvas" width="1200" height="180"></canvas>
+  <div id="app">
+    <div id="startScreen" class="screen active" style="position:relative;width:100vw;height:100vh;overflow:hidden;justify-content:flex-start;">
+      <img src="favicon.png" id="logoImg" alt="Game Logo">
+      <h1>re:deck COMMAND</h1>
+      <button id="playBtn">Play</button>
+    </div>
+<div id="deckBuilder" class="screen" style="padding:28px;align-items:flex-start;">
+  <h2 style="font-size:26px;color:#ffd76b;margin-bottom:8px;">Build your Deck (8 cards)</h2>
+  <div style="display:flex;gap:18px;width:100%;align-items:flex-start;">
+    <div id="cardsPool" style="flex:1;max-width:720px;display:flex;flex-wrap:wrap;gap:12px;background:rgba(8,18,12,0.03);padding:12px;border-radius:10px;">
+    </div>
+
+    <div style="width:360px;display:flex;flex-direction:column;gap:12px;">
+      <div style="background:rgba(8,18,12,0.04);padding:12px;border-radius:10px;">
+        <div style="font-weight:800;color:#aaffaa;margin-bottom:8px;">Your Deck <span id="deckCount" style="color:#ffd700">0/8</span></div>
+    <div id="deckSlots" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;justify-items:center;align-items:start;"></div>      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button id="deckClearBtn" style="background:#3a1a1a;border-color:#9c2222;">Clear</button>
+        <button id="deckStartBtn" style="background:#1a3d1a;border-color:#4caf50;">Start (to Map Select)</button>
+      </div>
+    </div>
+  </div>
+</div>
+    <div id="mapSelect" class="screen">
+      <h2>Select a Map</h2>
+      <button class="mapBtn" data-map="desert">Desert</button>
+      <button class="mapBtn" data-map="forest">Forest</button>
+      <button class="mapBtn" data-map="city">City</button>
+    </div>
+    <div id="gameScreen" class="screen">
+      <div id="canvasContainer">
+        <canvas id="gameCanvas" width="900" height="600"></canvas>
+        <div id="moneyWaveOverlay">
+          <div id="waveDisplay">Wave 0</div>
+          <div id="moneyDisplay">$100</div>
+          <div id="integrityDisplay">Integrity: 100</div>
+        </div>
+      </div>
+      <div id="sidePanel">
+        <div id="sideHeader">
+          <h2 id="sideTitle">Cards</h2>
+        </div>
+        <div id="sideContent"></div>
+      </div>
+      <div id="gameControls">
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+          <button id="speedToggleBtn" class="active">1x</button>
+          <button id="autoWaveBtn">Auto: OFF</button>
+        </div>
+        <button id="nextWaveBtn">Start Next Wave</button>
+      </div>
+    </div>
+  </div>
+    <script src="waves.js"></script>
+    <script src="enemies.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
